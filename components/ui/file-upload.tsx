@@ -34,20 +34,24 @@ export const FileUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
-    setFiles((prevFiles) => [...prevFiles, ...newFiles]);
-    onChange && onChange(newFiles);
+    const updatedFiles = [...files, ...newFiles]; // Combine new files with existing ones
+    setFiles(updatedFiles);
+    onChange && onChange(updatedFiles); // Pass all files to parent
   };
+  function clear () {
+    setFiles([]);
+  }
 
   const handleClick = () => {
     fileInputRef.current?.click();
   };
 
   const { getRootProps, isDragActive } = useDropzone({
-    multiple: false,
+    multiple: true, // Allow multiple files
     noClick: true,
     onDrop: handleFileChange,
     onDropRejected: (error) => {
-      console.log(error);
+      console.error("File rejected:", error);
     },
   });
 
@@ -62,12 +66,13 @@ export const FileUpload = ({
           ref={fileInputRef}
           id="file-upload-handle"
           type="file"
+          multiple // Enable multiple file selection
           onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
           className="hidden"
         />
         <div className="flex flex-col items-center justify-center">
           <p className="relative z-20 font-sans font-bold text-neutral-700 dark:text-neutral-300 text-base">
-            Upload dit pensum
+            Upload your files
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
             Drag or drop your files here or click to upload
@@ -143,7 +148,7 @@ export const FileUpload = ({
                     animate={{ opacity: 1 }}
                     className="text-neutral-600 flex flex-col items-center"
                   >
-                    Drop it
+                    Drop your files
                     <IconUpload className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
                   </motion.p>
                 ) : (
@@ -164,27 +169,3 @@ export const FileUpload = ({
     </div>
   );
 };
-
-export function GridPattern() {
-  const columns = 41;
-  const rows = 11;
-  return (
-    <div className="flex bg-gray-100 dark:bg-neutral-900 flex-shrink-0 flex-wrap justify-center items-center gap-x-px gap-y-px  scale-105">
-      {Array.from({ length: rows }).map((_, row) =>
-        Array.from({ length: columns }).map((_, col) => {
-          const index = row * columns + col;
-          return (
-            <div
-              key={`${col}-${row}`}
-              className={`w-10 h-10 flex flex-shrink-0 rounded-[2px] ${
-                index % 2 === 0
-                  ? "bg-gray-50 dark:bg-neutral-950"
-                  : "bg-gray-50 dark:bg-neutral-950 shadow-[0px_0px_1px_3px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_3px_rgba(0,0,0,1)_inset]"
-              }`}
-            />
-          );
-        })
-      )}
-    </div>
-  );
-}
