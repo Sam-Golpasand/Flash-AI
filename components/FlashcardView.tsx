@@ -31,7 +31,7 @@ export default function FlashcardView() {
     try {
       const supabase = createClient();
       const { data: Cards, error } = await supabase
-        .from("Cards")
+        .from("cards")
         .select("*")
         .eq("deck_id", params.deckId);
 

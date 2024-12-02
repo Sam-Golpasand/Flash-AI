@@ -34,12 +34,12 @@ export default function DeckView() {
 
       // Fetch decks with card counts
       const { data: decksData, error: deckError } = await supabase
-        .from("Deck")
+        .from("decks")
         .select(`
           id,
           title,
           user_id,
-          Cards(deck_id)
+          cards(deck_id)
         `)
         .eq("user_id", userData.user.id);
 
@@ -51,7 +51,7 @@ export default function DeckView() {
 
       // Transform data to include card counts
       const enrichedDecks = decksData?.map((deck: any) => {
-        const cardCount = deck.Cards?.length || 0;
+        const cardCount = deck.cards?.length || 0;
         return { id: deck.id, title: deck.title, cardCount };
       });
 
@@ -59,6 +59,25 @@ export default function DeckView() {
     } catch (error) {
       console.error("Unexpected error fetching decks:", error);
       setDecks([]);
+    }
+  }
+
+  async function deleteDeck(deckId: number) {
+    try {
+      const supabase = await createClient();
+      const { error } = await supabase
+        .from("decks")
+        .delete()
+        .eq("id", deckId);
+
+      if (error) {
+        console.error("Error deleting deck:", error);
+        return;
+      }
+
+      setDecks((prevDecks) => prevDecks ? prevDecks.filter((deck) => deck.id !== deckId) : null);
+    } catch (error) {
+      console.error("Unexpected error deleting deck:", error);
     }
   }
 
@@ -87,7 +106,7 @@ export default function DeckView() {
             </CardHeader>
             <CardFooter className="flex justify-center p-2 gap-2">
              <Link href={`/study/${deck.id}`}><Button variant="outline" className="w-full">Study</Button></Link> 
-              <Button variant="destructive" className="w-full">Delete</Button>
+              <Button onClick={() => deleteDeck(deck.id)} variant="destructive" className="w-full">Delete</Button>
             </CardFooter>
           </Card>
         ))}

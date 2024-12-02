@@ -20,6 +20,8 @@ interface ApiResponse {
 export default function Index() {
   const [files, setFiles] = useState<File[]>([]);
   const [response, setResponse] = useState<ApiResponse | null>(null);
+  const [deckName, setDeckName] = useState<string>(""); // State for deck name
+  const [deckAmount, setDeckAmount] = useState<number>(1); // State for deck amount
   const [loading, setLoading] = useState<boolean>(false);
 
   function handleFileUpload(files: File[]) {
@@ -29,7 +31,15 @@ export default function Index() {
   function handleClear() {
     setFiles([]);
     setResponse(null);
+    setDeckName(""); // Clear the deck name
+    setDeckAmount(1); // Reset the deck amount
     toast.info("Form cleared");
+  }
+
+  function handleDeckFormSubmit(name: string, amount: number) {
+    setDeckName(name); // Update deck name
+    setDeckAmount(amount); // Update deck amount
+    handleGenerate(name, amount); // Pass these values to the generation logic
   }
 
   async function handleGenerate(deckName: string, deckAmount: number) {
@@ -63,11 +73,13 @@ export default function Index() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
+      console.log("User:", user);
       if (!user) {
         toast.error("User not authenticated");
         throw new Error("User not authenticated");
       }
 
+      
       const { data: deck, error: deckError } = await supabase
         .from("decks")
         .insert([{ title: deckName, user_id: user.id }])
@@ -80,12 +92,14 @@ export default function Index() {
       }
 
       const cards = data.cards.map((card) => ({
-        deck_id: deck.id,
-        question: card.question,
-        answer: card.answer,
+        deck_id: deck.id,  // Add the deck_id from the newly created deck
+        front: card.question,
+        back: card.answer,
       }));
-
-      const { error: cardsError } = await supabase.from("cards").insert(cards);
+      
+      const { error: cardsError } = await supabase
+        .from("cards")
+        .insert(cards);
 
       if (cardsError) {
         toast.error("Failed to create cards");
@@ -106,7 +120,7 @@ export default function Index() {
       <div className="w-full max-w-md space-y-8">
         <h1 className="text-3xl font-bold text-center">Create Deck</h1>
         <FileUpload onChange={handleFileUpload} />
-        <DeckForm onSubmit={handleGenerate} isLoading={loading} />
+        <DeckForm onSubmit={handleDeckFormSubmit} isLoading={loading} />
         <div className="flex justify-center space-x-4">
           <Button variant="outline" onClick={handleClear} disabled={loading}>
             Clear
